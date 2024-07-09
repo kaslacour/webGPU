@@ -4,54 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     main();
 });
 
-async function initMathField(label, mathInput, initInput) {
-    const mathField = document.getElementById(mathInput);
-    const mathLabel = document.getElementById(label);
-
-    // Set the initial label to a LaTeX expression and render it
-    const labelExpression = '\\( \\frac{dx}{dt} = \\)';
-    mathLabel.innerHTML = labelExpression;
-    MathJax.typesetPromise([mathLabel]);
-
-    // Set an initial value (LaTeX format) for the math input field
-    mathField.setValue(initInput);
-
-    mathField.addEventListener('input', () => {
-        const enteredMath = mathField.getValue('latex'); // Get the LaTeX math expression
-        const normalMath = latexToNormal(enteredMath);
-    });
-}
-
-function latexToNormal(latex) {
-    const mathJson = MathLive.latexToMathJson(latex);
-    const normal = MathLive.mathJsonToText(mathJson, { output: 'ascii-math' });
-    return normal;
-}
-
-
-
-async function initWebGPU() {
-    if (!navigator.gpu) {
-        console.error("WebGPU not supported on this browser");
-        return;
-    }
-
-    const adapter = await navigator.gpu.requestAdapter();
-    const device = await adapter.requestDevice();
-
-    const canvas = document.getElementById("gpuCanvas");
-    const context = canvas.getContext("webgpu");
-
-    const swapChainFormat = "bgra8unorm";
-
-    context.configure({
-        device: device,
-        format: swapChainFormat,
-    });
-
-    return { device, context, swapChainFormat };
-}
-
 async function main() {
     const { device, context, swapChainFormat } = await initWebGPU();
 
@@ -61,13 +13,10 @@ async function main() {
 
     const numParticles = 1024;
     const particlePositions = new Float32Array(numParticles * 2); // Position only
-    // const particleVelocities = new Float32Array(numParticles * 2); // Velocity only
 
     for (let i = 0; i < numParticles; i++) {
         particlePositions[i * 2 + 0] = Math.random() * 3 - 1.5; // x position
         particlePositions[i * 2 + 1] = Math.random() * 3 - 1.5; // y position
-        //particleVelocities[i * 2 + 0] = - particlePositions[i * 2 + 1]; // x velocity
-        //particleVelocities[i * 2 + 1] = particlePositions[i * 2 + 0]; // y velocity
     }
 
     const positionBuffer = device.createBuffer({
@@ -92,6 +41,7 @@ async function main() {
     });
     new Float32Array(deltaTimeBuffer.getMappedRange())[0] = 0.016;
     deltaTimeBuffer.unmap();
+
 
     const bindGroupLayout = device.createBindGroupLayout({
         entries: [
@@ -224,4 +174,80 @@ async function main() {
     }
 
     requestAnimationFrame(frame);
+}
+
+async function initMathField(label, mathInput, initInput) {
+    const mathField = document.getElementById(mathInput);
+    const mathLabel = document.getElementById(label);
+
+    // Set the initial label to a LaTeX expression and render it
+    const labelExpression = '\\( \\frac{dx}{dt} = \\)';
+    mathLabel.innerHTML = labelExpression;
+    MathJax.typesetPromise([mathLabel]);
+
+    // Set an initial value (LaTeX format) for the math input field
+    mathField.setValue(initInput);
+
+    mathField.addEventListener('input', async () => {
+        const enteredMath = mathField.getValue('latex'); // Get the LaTeX math expression
+        const normalMath = latexToNormal(enteredMath);
+
+        const wgslCode = await loadWGSLFile('shaders.wgsl');
+        const newMathFunction = createNewMathFunction(normalMath);
+        const modifiedWGSLCode = insertNewFunction(wgslCode, newMathFunction);
+
+
+
+    });
+}
+
+async function initWebGPU() {
+    if (!navigator.gpu) {
+        console.error("WebGPU not supported on this browser");
+        return;
+    }
+
+    const adapter = await navigator.gpu.requestAdapter();
+    const device = await adapter.requestDevice();
+
+    const canvas = document.getElementById("gpuCanvas");
+    const context = canvas.getContext("webgpu");
+
+    const swapChainFormat = "bgra8unorm";
+
+    context.configure({
+        device: device,
+        format: swapChainFormat,
+    });
+
+    return { device, context, swapChainFormat };
+}
+
+function latexToNormal(latex) {
+    const mathJson = MathLive.latexToMathJson(latex);
+    const normal = MathLive.mathJsonToText(mathJson, { output: 'ascii-math' });
+    return normal;
+}
+
+async function loadWGSLFile(url) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to load WGSL file: ${response.statusText}`);
+    }
+    return await response.text();
+}
+
+function createNewMathFunction(expr) {
+    return `
+    fn new_math_function(x: f32, y: f32, t:f32) -> f32 {
+        return `+
+        expr + `;
+    }
+    `;
+
+}
+
+function insertNewFunction(wgslCode, newFunction) {
+    // Insert the new function at the beginning of the WGSL code
+    return newFunction + '\n' + wgslCode;
 }
