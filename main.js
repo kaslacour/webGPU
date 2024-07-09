@@ -1,50 +1,32 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const mathField1 = document.getElementById('mathInput1');
-    const mathLabel1 = document.getElementById('dx/dt');
-
-    // Set the initial label to a LaTeX expression and render it
-    const labelExpression1 = '\\( \\frac{dx}{dt} = \\)';
-    mathLabel1.innerHTML = labelExpression1;
-    MathJax.typesetPromise([mathLabel1]);
-
-    // Set an initial value (LaTeX format) for the math input field
-    mathField1.setValue('-y');
-
-    mathField1.addEventListener('input', () => {
-        const enteredMath = mathField1.getValue('latex'); // Get the LaTeX math expression
-        // renderMath(enteredMath);
-    });
-
-
-    const mathField2 = document.getElementById('mathInput2');
-    const mathLabel2 = document.getElementById('dy/dt');
-
-    // Set the initial label to a LaTeX expression and render it
-    const labelExpression2 = '\\( \\frac{dy}{dt} = \\)';
-    mathLabel2.innerHTML = labelExpression2;
-    MathJax.typesetPromise([mathLabel2]);
-
-    // Set an initial value (LaTeX format) for the math input field
-    mathField2.setValue('x');
-
-    mathField2.addEventListener('input', () => {
-        const enteredMath = mathField2.getValue('latex'); // Get the LaTeX math expression
-        // renderMath(enteredMath);
-    });
-
-
-
-
-    /* function renderMath(latex) {
-        const renderedMath = document.getElementById('renderedMath');
-        renderedMath.innerHTML = `\\(${latex}\\)`;
-        MathJax.typesetPromise([renderedMath]).catch((err) => console.log(err.message));
-    } */
-
-    // Initialize WebGPU and start rendering
+    initMathField('dx/dt','mathInput1','-y');
+    initMathField('dy/dt','mathInput2','x');
     main();
 });
 
+async function initMathField(label, mathInput, initInput) {
+    const mathField = document.getElementById(mathInput);
+    const mathLabel = document.getElementById(label);
+
+    // Set the initial label to a LaTeX expression and render it
+    const labelExpression = '\\( \\frac{dx}{dt} = \\)';
+    mathLabel.innerHTML = labelExpression;
+    MathJax.typesetPromise([mathLabel]);
+
+    // Set an initial value (LaTeX format) for the math input field
+    mathField.setValue(initInput);
+
+    mathField.addEventListener('input', () => {
+        const enteredMath = mathField.getValue('latex'); // Get the LaTeX math expression
+        const normalMath = latexToNormal(enteredMath);
+    });
+}
+
+function latexToNormal(latex) {
+    const mathJson = MathLive.latexToMathJson(latex);
+    const normal = MathLive.mathJsonToText(mathJson, { output: 'ascii-math' });
+    return normal;
+}
 
 
 
