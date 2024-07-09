@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGPU Particle Simulation</title>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive.core.css">
+    <script src="https://unpkg.com/mathlive/dist/mathlive.min.js"></script>
+</head>
+<body>
+    <canvas id="gpuCanvas" width="800" height="800"></canvas>
+    <div>
+        <label id="dx/dt" for="mathInput"></label>
+        <math-field id="mathInput1"></math-field>
+    </div>
+    <div>
+        <label id="dy/dt" for="mathInput"></label>
+        <math-field id="mathInput2"></math-field>
+    </div>
+    <!-- <div>
+        <p>Rendered Math:</p>
+        <div id="renderedMath"></div>
+    </div> -->
+    <script type="module" src="main.js"></script>
+</body>
+</html>
